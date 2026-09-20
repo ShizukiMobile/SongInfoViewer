@@ -430,3 +430,7 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# .NET build output
+bin/
+obj/
