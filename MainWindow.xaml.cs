@@ -13,12 +13,13 @@ namespace SongInfoViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly MediaSessionService _mediaSessionService = new();
+        private readonly MainViewModel _viewModel;
 
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            _viewModel = new MainViewModel();
+            DataContext = _viewModel;
 
             Loaded += MainWindow_Loaded;
         }
@@ -26,16 +27,45 @@ namespace SongInfoViewer
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("[App] MainWindow Loaded. Initializing MediaSessionService...");
-            await _mediaSessionService.InitializeAsync();
+            await _viewModel.InitializeAsync();
         }
     }
 
     public class MainViewModel : INotifyPropertyChanged
     {
-        private string _songTitle = "文化祭オープニングテーマ";
-        private string _artistName = "SongInfoViewer Band";
-        private string _albumTitle = "School Festival 2026 Selection";
+        private readonly MediaSessionService _mediaSessionService = new();
+
+        private string _songTitle = "読み込み中...";
+        private string _artistName = "読み込み中...";
+        private string _albumTitle = "";
         private ImageSource? _albumArt = null;
+
+        public MainViewModel()
+        {
+            _mediaSessionService.SongInfoChanged += MediaSessionService_SongInfoChanged;
+        }
+
+        public async System.Threading.Tasks.Task InitializeAsync()
+        {
+            await _mediaSessionService.InitializeAsync();
+        }
+
+        private void MediaSessionService_SongInfoChanged(object? sender, SongInfo info)
+        {
+            // UIスレッドでプロパティを更新
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                SongTitle = info.Title;
+                ArtistName = info.Artist;
+                AlbumTitle = info.AlbumTitle;
+
+                // 新しい画像がある場合、または「アイコンとして除外されたため既存の画像を維持する」指定がない場合に更新
+                if (info.AlbumArt != null || !info.PreserveExistingArtOnNull)
+                {
+                    AlbumArt = info.AlbumArt;
+                }
+            });
+        }
 
         public string SongTitle
         {
