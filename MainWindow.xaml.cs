@@ -13,10 +13,20 @@ namespace SongInfoViewer
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly MediaSessionService _mediaSessionService = new();
+
         public MainWindow()
         {
             InitializeComponent();
             DataContext = new MainViewModel();
+
+            Loaded += MainWindow_Loaded;
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("[App] MainWindow Loaded. Initializing MediaSessionService...");
+            await _mediaSessionService.InitializeAsync();
         }
     }
 
