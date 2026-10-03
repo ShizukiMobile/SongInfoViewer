@@ -149,11 +149,16 @@ namespace SongInfoViewer
 
                     token.ThrowIfCancellationRequested();
 
+                    var (parsedArtist, parsedAlbum) = ParseArtistAndAlbum(
+                        mediaProperties.Artist ?? "",
+                        mediaProperties.AlbumTitle ?? "",
+                        appId);
+
                     var info = new SongInfo
                     {
                         Title = string.IsNullOrWhiteSpace(mediaProperties.Title) ? "不明な曲名" : mediaProperties.Title,
-                        Artist = string.IsNullOrWhiteSpace(mediaProperties.Artist) ? "不明なアーティスト" : mediaProperties.Artist,
-                        AlbumTitle = string.IsNullOrWhiteSpace(mediaProperties.AlbumTitle) ? "" : mediaProperties.AlbumTitle,
+                        Artist = string.IsNullOrWhiteSpace(parsedArtist) ? "不明なアーティスト" : parsedArtist,
+                        AlbumTitle = parsedAlbum,
                         AlbumArt = thumbnailImage,
                         PreserveExistingArtOnNull = isFilteredIcon
                     };
@@ -253,6 +258,30 @@ namespace SongInfoViewer
                 return true;
             }
             return false;
+        }
+
+        private (string Artist, string AlbumTitle) ParseArtistAndAlbum(string rawArtist, string rawAlbumTitle, string appId)
+        {
+            string artist = rawArtist;
+            string albumTitle = rawAlbumTitle;
+
+            // AlbumTitleが空で、ArtistにEm Dash区切り(" — ")が含まれている場合、
+            // Apple Music等でアーティスト名とアルバム名が結合されて送られてきていると判断して分離する
+            if (string.IsNullOrWhiteSpace(albumTitle) && !string.IsNullOrWhiteSpace(artist))
+            {
+                const string emDashSeparator = " — "; // \u0020\u2014\u0020
+                int separatorIndex = artist.IndexOf(emDashSeparator, StringComparison.Ordinal);
+                if (separatorIndex >= 0)
+                {
+                    string extractedArtist = artist.Substring(0, separatorIndex).Trim();
+                    string extractedAlbum = artist.Substring(separatorIndex + emDashSeparator.Length).Trim();
+
+                    Debug.WriteLine($"[GSMTC] Separated combined artist/album: Artist='{extractedArtist}', Album='{extractedAlbum}' (AppId: {appId})");
+                    return (extractedArtist, extractedAlbum);
+                }
+            }
+
+            return (artist, albumTitle);
         }
     }
 }
