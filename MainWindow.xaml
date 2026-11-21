@@ -8,9 +8,14 @@
         Title="Song Info Viewer" Height="600" Width="1000"
         MinHeight="400" MinWidth="700"
         Background="#121212"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="SongInfoViewer.ico">
     
-    <Grid Margin="40">
+    <!-- 画面サイズに応じた自動スケーリング領域（容易に戻せるよう既存Gridの外側をViewboxでラップ） -->
+    <Viewbox Stretch="Uniform">
+        <!-- 基準解像度 (1000x600)。ウィンドウ拡縮時にこの比率を保ったまま均等拡大されます -->
+        <Grid Width="1000" Height="600">
+            <Grid Margin="40">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
@@ -26,7 +31,9 @@
             <Grid>
                 <!-- アルバムアート画像（データ設定時に表示） -->
                 <Image Source="{Binding AlbumArt}" 
-                       Stretch="UniformToFill" 
+                       Stretch="Uniform" 
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
                 
                 <!-- 画像が無い場合のプレースホルダーアイコン/背景 -->
@@ -68,5 +75,7 @@
                        Foreground="#A0A0A0" 
                        TextWrapping="Wrap"/>
         </StackPanel>
-    </Grid>
+            </Grid>
+        </Grid>
+    </Viewbox>
 </Window>
